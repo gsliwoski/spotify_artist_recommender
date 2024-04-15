@@ -8,6 +8,8 @@ from scipy.spatial.distance import cosine
 import json
 from tqdm import tqdm
 import argparse
+import sys
+pd.set_option('display.max_colwidth', None)
 
 sp = None
 
@@ -181,6 +183,11 @@ def main():
 
     print("Initializing Spotify")
     initialize_spotify_client(args.creds)
+    try:
+        _ = sp.current_user()
+    except:
+        print("Failed to initialize Spotify, are credentials correct?")
+        sys.exit()
     tracks = get_recently_played(selected_artists=args.artists)
     print("Getting reference features")
     reference_df = pd.DataFrame.from_records(tracks)
