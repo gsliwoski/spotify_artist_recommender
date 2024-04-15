@@ -10,11 +10,11 @@ Usage:
 
 To use the most recent songs you've listened to:
 
-python --creds credentials.json.example
+python artist_recommender.py --creds credentials.json.example
 
 To use a list of artists instead:
 
-python --creds credentials.json.example --artists "The Tallest Man On Earth, Ben Woodward, JJ Heller, Cornelis Vreeswijk"
+python artist_recommender.py --creds credentials.json.example --artists "The Tallest Man On Earth, Ben Woodward, JJ Heller, Cornelis Vreeswijk"
 
 To get credentials:
 
