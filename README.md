@@ -24,4 +24,4 @@ To get credentials:
 4. If haven't already, click Create app
 5. Click on your app
 6. Click on Settings
-7. Get Client ID and Client Secret
+7. Get Client ID and Client Secret and redirect URI and put into credential JSON

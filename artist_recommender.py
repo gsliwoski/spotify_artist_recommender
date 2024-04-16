@@ -21,7 +21,7 @@ def initialize_spotify_client(credentials_file):
     creds = json.load(open(credentials_file))
     SPOTIPY_CLIENT_ID = creds['SPOTIPY_CLIENT_ID']
     SPOTIPY_CLIENT_SECRET = creds['SPOTIPY_CLIENT_SECRET']
-    SPOTIPY_REDIRECT_URI = 'http://localhost:8888/callback'
+    SPOTIPY_REDIRECT_URI = creds['SPOTIPY_REDIRECT_URI']
     SCOPE = 'user-read-recently-played'
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
                                                client_secret=SPOTIPY_CLIENT_SECRET,
