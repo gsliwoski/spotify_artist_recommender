@@ -17,9 +17,12 @@ sp = None
 MUSIC_FEATURES = ["danceability", "energy", "loudness", "speechiness", "acousticness", "instrumentalness", "liveness", "valence"]
 SHEET_FEATURES = ["key", "mode", "tempo"]
 
-def initialize_spotify_client(credentials_file):
+def initialize_spotify_client(credentials_file, isfile=True):
     global sp
-    creds = json.load(open(credentials_file))
+    if isfile:
+        creds = json.load(open(credentials_file))
+    else:
+        creds = credentials_file
     SPOTIPY_CLIENT_ID = creds['SPOTIPY_CLIENT_ID']
     SPOTIPY_CLIENT_SECRET = creds['SPOTIPY_CLIENT_SECRET']
     SPOTIPY_REDIRECT_URI = creds['SPOTIPY_REDIRECT_URI']
