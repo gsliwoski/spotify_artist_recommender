@@ -9,6 +9,7 @@ import json
 from tqdm import tqdm
 import argparse
 import sys
+from datetime import datetime
 pd.set_option('display.max_colwidth', None)
 
 sp = None
@@ -22,7 +23,7 @@ def initialize_spotify_client(credentials_file):
     SPOTIPY_CLIENT_ID = creds['SPOTIPY_CLIENT_ID']
     SPOTIPY_CLIENT_SECRET = creds['SPOTIPY_CLIENT_SECRET']
     SPOTIPY_REDIRECT_URI = creds['SPOTIPY_REDIRECT_URI']
-    SCOPE = 'user-read-recently-played'
+    SCOPE = 'playlist-modify-public user-read-recently-played'
     sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
                                                client_secret=SPOTIPY_CLIENT_SECRET,
                                                redirect_uri=SPOTIPY_REDIRECT_URI,
@@ -161,17 +162,34 @@ def get_closest_artists(df, features):
     all_feats_ref = all_feats[df[df.source=="reference"].index]
     all_feats_new = all_feats[df[df.source=="artist"].index]
     result_distances = average_cosine_distance(all_feats_ref, all_feats_new)
-    results = pd.DataFrame({"artist": df[df.source == "artist"]['name'].values, "distance": result_distances,
+    results = pd.DataFrame({"artist": df[df.source == "artist"]['name'].values, "artist_id": df[df.source == "artist"]['artist_id'].values,
+                            "distance": result_distances,
                             'artist_url': df[df.source == "artist"]['artist_url']})
     return results.sort_values("distance").head(10)
 
-#music_feats = StandardScaler().fit_transform(df[music_features])
-#music_tempo_feats = StandardScaler().fit_transform(df[music_features+["tempo"]])
-# music_feats_ref = music_feats[df[df.source=="reference"].index]
-# music_feats_new = music_feats[df[df.source=="artist"].index]
-# result_music_distances = average_cosine_distance(music_feats_ref, music_feats_new)
-# results_music_distances = pd.DataFrame({"artist": df[df.source=="artist"]['name'].values, "distance": result_music_distances})
-# results_music_distances.sort_values("distance").head(10)
+def generate_playlist(closest_artists, artists = []):
+    playlist_name = f"Recommended_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    playlist_desc = f"Top 10 recommended artists based on supplied artists: {', '.join(artists)}" if len(artists) > 0 else "Top 10 recommended artists from recently played."
+    user_id = sp.current_user()['id']
+    new_playlist = sp.user_playlist_create(user_id, playlist_name, description=playlist_desc)
+    playlist_id = new_playlist['id']
+    for i,r in closest_artists.iterrows():
+        print(r)
+        artist = r.artist
+        artist_id = r.artist_id
+        top_tracks = sp.artist_top_tracks(artist_id, country='US')['tracks']
+        if len(top_tracks) == 0:
+            continue
+        else:
+            top_track_uri = top_tracks[0]['uri']
+        sp.playlist_add_items(playlist_id, [top_track_uri])
+
+    if "name" in new_playlist and "external_urls" in new_playlist:
+        print("Created playlist:", new_playlist['name'], "with URL:", new_playlist['external_urls']['spotify'])
+        return True
+    else:
+        print("failed to create new playlist")
+        return False
 
 def main():
     parser = argparse.ArgumentParser(description="Spotify artist recommender. Requires a JSON with spotify credentials "
@@ -179,6 +197,7 @@ def main():
                                                  "of artists instead of looking up last played.")
     parser.add_argument('--creds', type=str, help='Path to credentials json file', required=True)
     parser.add_argument('--artists', type=str, help='Comma separated list of artists', default="")
+    parser.add_argument('--playlist', action='store_true', help='Create a Spotify playlist if set ("Recommended_timstamp")')
     args = parser.parse_args()
 
     print("Initializing Spotify")
@@ -198,8 +217,9 @@ def main():
     artist_df['source'] = 'artist'
     df = pd.concat([reference_df, artist_df],ignore_index=True)
     closest_artists = get_closest_artists(df, MUSIC_FEATURES+SHEET_FEATURES)
-    print(closest_artists)
     closest_artists.to_csv("closest_artists.csv", index=False)
+    if args.playlist:
+        generate_playlist(closest_artists, args.artists)
 
 if __name__ == "__main__":
     main()
