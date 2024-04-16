@@ -16,6 +16,8 @@ To use a list of artists instead:
 
 python artist_recommender.py --creds credentials.json.example --artists "The Tallest Man On Earth, Ben Woodward, JJ Heller, Cornelis Vreeswijk"
 
+If you want to automatically create a playlist then set the --playlist flag
+
 To get credentials:
 
 1. Go to https://developer.spotify.com/
