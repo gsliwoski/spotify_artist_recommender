@@ -1,2 +1,4 @@
 credentials.json
 get_genre.py
+.cache
+closest_artists.csv
