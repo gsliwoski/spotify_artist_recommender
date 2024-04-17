@@ -35,6 +35,9 @@ def initialize_spotify_client(credentials_file, isfile=True):
 def find_artists_with_matching_genres(target_genres):
     matched_artists = []
     # Try searching for a perfect match of genres then randomly remove one genre at a time until get at least 100
+    # Impossible to search with more than 10 conditions so initially randomly select 10 genres from the list
+    if len(target_genres) > 10:
+        target_genres = random.sample(target_genres, 10)
     while len(target_genres) > 0 and len(matched_artists) < 10:
         print(f"Trying {target_genres}")
         query = " AND ".join([f"genre:\"{genre}\"" for genre in target_genres])
@@ -80,9 +83,15 @@ def get_recently_played(limit=50, selected_artists = ""):
         print(f"Using supplied list of artists (first 10 artists only)")
         results = {'items':[]}
         for artist in selected_artists[:10]:
-            artist_objects = sp.search(q=f"artist: {artist}", type='artist')
+            artist_objects = []
+            offset = 0
+            current_artist_objects = sp.search(q=f"artist: {artist}", type='artist', limit=limit)['artists']['items']
+            while len(current_artist_objects) > 0:
+                artist_objects.extend(current_artist_objects)
+                offset += limit
+                current_artist_objects = sp.search(q=f"artist: {artist}", type='artist', limit=limit, offset=offset)['artists']['items']
             try:
-                artist_objects = sorted([x for x in artist_objects['artists']['items'] if x['name'].lower() == artist.lower()],
+                artist_objects = sorted([x for x in artist_objects if x['name'].lower() == artist.lower()],
                                         key= lambda x: x['popularity'], reverse=True)
             except KeyError:
                 artist_objects = []
@@ -92,6 +101,7 @@ def get_recently_played(limit=50, selected_artists = ""):
             elif len(artist_objects) > 1:
                 print(f"Multiple artist_id found for {artist}, selecting the most popular artist_id in the list.")
             artist_id = artist_objects[0]['id']
+            print(f"Found {artist_objects[0]['name']}")
             try:
                 artist_url = artist_objects[0]['external_urls']['spotify']
             except KeyError:
